@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Каталог одежды и Заказы</title>
+    <style>
+        :root {
+            --primary-color: #5c6bc0;
+            --primary-hover: #4755a8;
+            --danger-color: #ef5350;
+            --danger-hover: #d32f2f;
+            --success-color: #66bb6a;
+            --success-hover: #43a047;
+            --bg-color: #f5f7fb;
+            --card-bg: #ffffff;
+            --text-color: #333333;
+            --border-color: #e0e0e0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.5;
+            padding: 10px;
+        }
+
+        .container {
+            max-width: 950px;
+            margin: 0 auto;
+            background: var(--card-bg);
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            position: relative;
+        }
+
+        /* Кнопка входа для сотрудников (аккуратная в углу) */
+        .staff-login-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: #f0f2f5;
+            border: 1px solid var(--border-color);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            color: #555;
+        }
+        .staff-login-btn:hover { background: #e4e6eb; }
+
+        h1, h2, h3 {
+            margin-bottom: 15px;
+            color: #2c3e50;
+        }
+
+        h1 { font-size: 1.4rem; border-bottom: 2px solid var(--primary-color); padding-bottom: 8px; padding-right: 120px; }
+        h2 { font-size: 1.2rem; margin-top: 25px; border-left: 4px solid var(--primary-color); padding-left: 8px; }
+
+        .section-block {
+            background: #fafafa;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .summary-box {
+            background: #e8eaf6;
+            padding: 12px;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            color: #1a237e;
+        }
+
+        .form-group {
+            margin-bottom: 12px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 4px;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 8px;
+        }
+
+        .radio-label {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+            background: #f0f2f5;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            transition: background 0.2s;
+        }
+
+        .radio-label input { margin: 0; }
+
+        input[type="text"], input[type="number"], input[type="password"], textarea, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 0.95rem;
+            font-family: inherit;
+        }
+
+        textarea { resize: vertical; min-height: 60px; }
+
+        .btn {
+            display: inline-block;
+            width: 100%;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            text-align: center;
+        }
+
+        .btn:hover { background: var(--primary-hover); }
+        .btn-danger { background: var(--danger-color); padding: 6px 10px; font-size: 0.85rem; }
+        .btn-danger:hover { background: var(--danger-hover); }
+        .btn-success { background: var(--success-color); }
+        .btn-success:hover { background: var(--success-hover); }
+        .btn-secondary { background: #78909c; margin-bottom: 10px; }
+
+        #auth-panel {
+            background: #fff3e0;
+            border: 1px solid #ffe0b2;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        /* Таблица накладных */
+        .table-wrapper { width: 100%; overflow-x: auto; margin-top: 10px; }
+        .invoice-table { width: 100%; border-collapse: collapse; }
+        .invoice-table th, .invoice-table td {
+            border: 1px solid var(--border-color);
+            padding: 10px;
+            text-align: left;
+            font-size: 0.9rem;
+            vertical-align: middle;
+        }
+        .invoice-table th { background-color: #f8f9fa; font-weight: 600; }
+
+        .inv-thumb {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 4px;
+            background: #eee;
+            cursor: pointer;
+        }
+
+        /* Каталог товаров */
+        .catalog-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .product-card {
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+            background: #fff;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .product-img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            background: #f0f0f0;
+        }
+
+        .product-info {
+            padding: 10px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .product-title { font-size: 1rem; font-weight: bold; margin-bottom: 4px; }
+        .product-sku { font-size: 0.8rem; color: #666; margin-bottom: 6px; }
+        .product-price { font-size: 1.1rem; color: #1a237e; font-weight: bold; margin-bottom: 10px; }
+        .product-comment { font-size: 0.85rem; color: #555; margin-bottom: 10px; flex-grow: 1; }
+
+        /* Корзина */
+        .cart-box {
+            background: #fff8e1;
+            border: 1px solid #ffe0b2;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+        }
+
+        .sync-block {
+            background: #f1f8e9;
+            padding: 12px;
+            border-radius: 6px;
+            margin-top: 25px;
+            border: 1px solid #dcedc8;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <button class="staff-login-btn" onclick="toggleAuthPanel()" id="staff-btn-text">🔒 Вход для сотрудников</button>
+    <h1>🛍️ Каталог одежды и Заказы</h1>
+
+    <!-- Панель входа для сотрудников (скрыта по умолчанию от клиентов) -->
+    <div id="auth-panel" style="display: none;">
+        <h3>🔐 Авторизация сотрудников / админа</h3>
+        <div class="form-group">
+            <label>Выберите кто вы:</label>
+            <div class="radio-group" id="role-group">
+                <label class="radio-label" style="background: var(--primary-color); color: white;">
+                    <input type="radio" name="role" value="Аида" checked onchange="handleRoleChange(this.value)"> Аида (Менеджер)
+                </label>
+                <label class="radio-label">
+                    <input type="radio" name="role" value="Акбота" onchange="handleRoleChange(this.value)"> Акбота (Менеджер)
+                </label>
+                <label class="radio-label">
+                    <input type="radio" name="role" value="Администратор" onchange="handleRoleChange(this.value)"> Администратор
+                </label>
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="user-password" style="color: #e65100;">Введите пароль:</label>
+            <input type="password" id="user-password" placeholder="Пароль" oninput="verifyPassword()">
+            <span id="auth-status" style="font-size: 0.85rem; font-weight: bold; display: block; margin-top: 4px;"></span>
+        </div>
+        <button class="btn btn-secondary" onclick="logoutStaff()" style="margin-top: 5px;">Выйти в режим клиента</button>
+    </div>
+
+    <!-- СЕКЦИЯ 1: Касса и Накладные (Только для сотрудников) -->
+    <div class="section-block" id="cash-section" style="display: none;">
+        <h2>🧾 Секция 1: Касса и Учет Накладных</h2>
+        
+        <div class="summary-box">
+            Текущая сумма за день: <span id="total-amount">0</span> ₸
+        </div>
+
+        <div style="margin-bottom: 20px;">
+            <h3>➕ Добавление накладной</h3>
+            <div class="form-group">
+                <label for="inv-number">№ Накладной *</label>
+                <input type="text" id="inv-number" placeholder="Например, НАК-001">
+            </div>
+            <div class="form-group">
+                <label for="inv-product">Название товара (что закуплено/принято) *</label>
+                <input type="text" id="inv-product" placeholder="Наименование товара">
+            </div>
+            <div class="form-group">
+                <label for="inv-sum">Сумма (₸) *</label>
+                <input type="number" id="inv-sum" placeholder="0">
+            </div>
+            <div class="form-group">
+                <label for="inv-image-file">Фотография накладной / чека</label>
+                <input type="file" id="inv-image-file" accept="image/*">
+            </div>
+            <div class="form-group">
+                <label for="inv-comment">Комментарий к накладной</label>
+                <textarea id="inv-comment" placeholder="Любые детали..."></textarea>
+            </div>
+            <button class="btn" onclick="saveInvoice()">Сохранить накладную</button>
+        </div>
+
+        <h3>📋 Список накладных за текущий день</h3>
+        <div class="table-wrapper">
+            <table class="invoice-table">
+                <thead>
+                    <tr>
+                        <th>Фото</th>
+                        <th>№ Накладной</th>
+                        <th>Сотрудник</th>
+                        <th>Товар</th>
+                        <th>Сумма (₸)</th>
+                        <th>Комментарий</th>
+                        <th id="th-action-header" style="display: none;">Действия</th>
+                    </tr>
+                </thead>
+                <tbody id="invoice-tbody"></tbody>
+            </table>
+        </div>
+
+        <div style="margin-top: 15px; display: none;" id="close-day-container">
+            <button class="btn btn-success" onclick="closeDay()">💾 Закрыть день и сохранить отчет (обнулить на новый день)</button>
+        </div>
+
+        <h3 style="margin-top: 20px;">📦 Архив закрытых дней</h3>
+        <div class="table-wrapper">
+            <table class="invoice-table">
+                <thead>
+                    <tr>
+                        <th>Дата закрытия</th>
+                        <th>Кол-во накладных</th>
+                        <th>Итоговая сумма (₸)</th>
+                    </tr>
+                </thead>
+                <tbody id="archive-tbody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- СЕКЦИЯ 2: Корзина клиента (Только для клиентов) -->
+    <div class="section-block" id="client-cart-section">
+        <h2>🛒 Ваша корзина и заказ</h2>
+        <div class="cart-box">
+            <div id="cart-items-list" style="margin-bottom: 10px;">Корзина пуста</div>
+            <div id="cart-total" style="font-weight: bold; margin-bottom: 10px;">Итого: 0 ₸</div>
+            
+            <div class="form-group">
+                <label for="client-phone">Ваш номер телефона для связи (обязательно) *</label>
+                <input type="text" id="client-phone" placeholder="+7 (---) --- -- --">
+            </div>
+            <button class="btn btn-success" onclick="submitOrder()">Отправить заказ администратору</button>
+        </div>
+    </div>
+
+    <!-- СЕКЦИЯ 3: Заказы от клиентов (Только для сотрудников) -->
+    <div class="section-block" id="staff-orders-section" style="display: none;">
+        <h2>📥 Заказы от клиентов</h2>
+        <div class="table-wrapper">
+            <table class="invoice-table">
+                <thead>
+                    <tr>
+                        <th>Телефон клиента</th>
+                        <th>Товары в заказе</th>
+                        <th>Сумма</th>
+                        <th>Действие</th>
+                    </tr>
+                </thead>
+                <tbody id="orders-tbody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- СЕКЦИЯ 4: Каталог Моделей Одежды -->
+    <div class="section-block">
+        <h2>🛍️ Каталог Моделей Одежды (В наличии)</h2>
+
+        <div id="publish-form-block" style="display: none; border: 2px dashed var(--primary-color); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+            <h3>➕ Публикация новой модели одежды</h3>
+            <div class="form-group">
+                <label for="prod-sku">Артикул товара *</label>
+                <input type="text" id="prod-sku" placeholder="Например, ART-1024">
+            </div>
+            <div class="form-group">
+                <label for="prod-title">Название / Модель *</label>
+                <input type="text" id="prod-title" placeholder="Например, Платье летнее">
+            </div>
+            <div class="form-group">
+                <label for="prod-price">Цена (₸) *</label>
+                <input type="number" id="prod-price" placeholder="0">
+            </div>
+            <div class="form-group">
+                <label for="prod-image-file">Фотография товара (Файл с устройства)</label>
+                <input type="file" id="prod-image-file" accept="image/*">
+            </div>
+            <div class="form-group">
+                <label for="prod-comment">Описание / Комментарий</label>
+                <textarea id="prod-comment" placeholder="Размеры в наличии, ткань..."></textarea>
+            </div>
+            <button class="btn" onclick="saveProduct()">Опубликовать модель</button>
+        </div>
+
+        <div class="catalog-grid" id="catalog-container"></div>
+    </div>
+
+    <!-- СЕКЦИЯ 5: Синхронизация -->
+    <div class="sync-block" id="sync-section" style="display: none;">
+        <h3>🔗 Синхронизация данных</h3>
+        <p style="font-size: 0.85rem; margin-bottom: 10px; color: #555;">
+            Вы можете экспортировать или импортировать данные для обмена с коллегами.
+        </p>
+        <button class="btn btn-secondary" onclick="exportData()">Скачать данные (JSON)</button>
+        
+        <label style="margin-top: 8px; font-weight: bold; display: block;">Загрузить данные из файла:</label>
+        <input type="file" id="import-file" accept=".json" onchange="importData(this)">
+    </div>
+</div>
+
+<script>
+    let currentRole = "Клиент";
+    let isAuthenticated = false;
+    
+    let invoices = JSON.parse(localStorage.getItem('store_invoices')) || [];
+    let products = JSON.parse(localStorage.getItem('store_products')) || [];
+    let archiveDays = JSON.parse(localStorage.getItem('store_archive')) || [];
+    let clientOrders = JSON.parse(localStorage.getItem('store_orders')) || [];
+    let cart = [];
+
+    const passwords = {
+        'Аида': '0000',
+        'Акбота': '1105',
+        'Администратор': '1111'
+    };
+
+    function saveDataToStorage() {
+        localStorage.setItem('store_invoices', JSON.stringify(invoices));
+        localStorage.setItem('store_products', JSON.stringify(products));
+        localStorage.setItem('store_archive', JSON.stringify(archiveDays));
+        localStorage.setItem('store_orders', JSON.stringify(clientOrders));
+    }
+
+    function toggleAuthPanel() {
+        const panel = document.getElementById('auth-panel');
+        if (panel.style.display === 'none') {
+            panel.style.display = 'block';
+            handleRoleChange('Аида');
+        } else {
+            panel.style.display = 'none';
+        }
+    }
+
+    function logoutStaff() {
+        currentRole = "Клиент";
+        isAuthenticated = false;
+        document.getElementById('auth-panel').style.display = 'none';
+        updateUI();
+    }
+
+    function handleRoleChange(role) {
+        currentRole = role;
+        const passInput = document.getElementById('user-password');
+        
+        const labels = document.querySelectorAll('.radio-label');
+        labels.forEach(lbl => {
+            const radio = lbl.querySelector('input');
+            if (radio.value === role) {
+                lbl.style.background = 'var(--primary-color)';
+                lbl.style.color = 'white';
+            } else {
+                lbl.style.background = '#f0f2f5';
+                lbl.style.color = '#333';
+            }
+        });
+
+        passInput.value = '';
+        verifyPassword();
+    }
+
+    function verifyPassword() {
+        const pass = document.getElementById('user-password').value;
+        const status = document.getElementById('auth-status');
+        const requiredPass = passwords[currentRole];
+
+        if (pass === requiredPass) {
+            isAuthenticated = true;
+            status.textContent = "✅ Доступ разрешен";
+            status.style.color = "green";
+        } else {
+            isAuthenticated = false;
+            status.textContent = pass ? "❌ Неверный пароль" : "🔒 Требуется ввод пароля";
+            status.style.color = pass ? "red" : "#666";
+        }
+        updateUI();
+    }
+
+    function saveInvoice() {
+        if (!isAuthenticated) return;
+
+        const number = document.getElementById('inv-number').value.trim();
+        const product = document.getElementById('inv-product').value.trim();
+        const sum = parseFloat(document.getElementById('inv-sum').value) || 0;
+        const comment = document.getElementById('inv-comment').value.trim();
+        const fileInput = document.getElementById('inv-image-file');
+
+        if (!number || !product || sum <= 0) {
+            alert('Пожалуйста, заполните № накладной, название товара и укажите сумму.');
+            return;
+        }
+
+        const createAndSaveInvoice = (imgSrc) => {
+            invoices.push({
+                id: Date.now(),
+                number,
+                role: currentRole,
+                product,
+                sum,
+                comment,
+                image: imgSrc || ''
+            });
+            
+            saveDataToStorage();
+
+            document.getElementById('inv-number').value = '';
+            document.getElementById('inv-product').value = '';
+            document.getElementById('inv-sum').value = '';
+            document.getElementById('inv-comment').value = '';
+            fileInput.value = '';
+
+            updateUI();
+        };
+
+        if (fileInput.files && fileInput.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) { createAndSaveInvoice(e.target.result); };
+            reader.readAsDataURL(fileInput.files[0]);
+        } else {
+            createAndSaveInvoice('');
+        }
+    }
+
+    function deleteInvoice(id) {
+        if (currentRole !== 'Администратор' || !isAuthenticated) return;
+        invoices = invoices.filter(item => item.id !== id);
+        saveDataToStorage();
+        updateUI();
+    }
+
+    function closeDay() {
+        if (currentRole !== 'Администратор' || !isAuthenticated) return;
+        if (invoices.length === 0) {
+            alert('Нет накладных за текущий день для закрытия.');
+            return;
+        }
+
+        let totalSum = invoices.reduce((sum, item) => sum + item.sum, 0);
+        let todayStr = new Date().toLocaleDateString() + ' ' + new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+
+        archiveDays.push({
+            date: todayStr,
+            count: invoices.length,
+            sum: totalSum,
+            items: [...invoices]
+        });
+
+        invoices = [];
+        saveDataToStorage();
+        updateUI();
+        alert('День успешно закрыт! Накладные обнулены для нового дня.');
+    }
+
+    function saveProduct() {
+        if (!isAuthenticated) return;
+
+        const sku = document.getElementById('prod-sku').value.trim();
+        const title = document.getElementById('prod-title').value.trim();
+        const price = parseFloat(document.getElementById('prod-price').value) || 0;
+        const comment = document.getElementById('prod-comment').value.trim();
+        const fileInput = document.getElementById('prod-image-file');
+
+        if (!sku || !title || price <= 0) {
+            alert('Заполните артикул, название и цену!');
+            return;
+        }
+
+        const createAndSave = (imgSrc) => {
+            products.push({
+                id: Date.now(),
+                sku,
+                title,
+                price,
+                comment,
+                image: imgSrc || '',
+                author: currentRole
+            });
+            
+            saveDataToStorage();
+
+            document.getElementById('prod-sku').value = '';
+            document.getElementById('prod-title').value = '';
+            document.getElementById('prod-price').value = '';
+            document.getElementById('prod-comment').value = '';
+            fileInput.value = '';
+
+            updateUI();
+        };
+
+        if (fileInput.files && fileInput.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) { createAndSave(e.target.result); };
+            reader.readAsDataURL(fileInput.files[0]);
+        } else {
+            createAndSave('');
+        }
+    }
+
+    function deleteProduct(id) {
+        if (!isAuthenticated) return;
+        products = products.filter(item => item.id !== id);
+        saveDataToStorage();
+        updateUI();
+    }
+
+    function addToCart(productId) {
+        const prod = products.find(p => p.id === productId);
+        if (prod) {
+            cart.push(prod);
+            updateCartUI();
+            alert('Товар добавлен в корзину!');
+        }
+    }
+
+    function removeFromCart(index) {
+        cart.splice(index, 1);
+        updateCartUI();
+    }
+
+    function updateCartUI() {
+        const listDiv = document.getElementById('cart-items-list');
+        const totalDiv = document.getElementById('cart-total');
+
+        if (cart.length === 0) {
+            listDiv.innerHTML = 'Корзина пуста';
+            totalDiv.innerHTML = 'Итого: 0 ₸';
+            return;
+        }
+
+        let html = '<ul style="margin-left: 20px;">';
+        let total = 0;
+        cart.forEach((item, index) => {
+            total += item.price;
+            html += `<li>${item.title} (${item.price.toLocaleString()} ₸) <button onclick="removeFromCart(${index})" style="color:red;border:none;background:none;cursor:pointer;">[Удалить]</button></li>`;
+        });
+        html += '</ul>';
+
+        listDiv.innerHTML = html;
+        totalDiv.innerHTML = `Итого: ${total.toLocaleString()} ₸`;
+    }
+
+    function submitOrder() {
+        const phone = document.getElementById('client-phone').value.trim();
+        if (!phone) {
+            alert('Пожалуйста, введите ваш номер телефона для связи!');
+            return;
+        }
+        if (cart.length === 0) {
+            alert('Ваша корзина пуста.');
+            return;
+        }
+
+        let totalSum = cart.reduce((sum, item) => sum + item.price, 0);
+        clientOrders.push({
+            id: Date.now(),
+            phone: phone,
+            items: [...cart],
+            total: totalSum
+        });
+
+        saveDataToStorage();
+        cart = [];
+        updateCartUI();
+        document.getElementById('client-phone').value = '';
+        alert('Заказ успешно отправлен! Скоро с вами свяжутся.');
+        updateUI();
+    }
+
+    function deleteOrder(orderId) {
+        if (!isAuthenticated) return;
+        clientOrders = clientOrders.filter(o => o.id !== orderId);
+        saveDataToStorage();
+        updateUI();
+    }
+
+    function updateUI() {
+        const cashSection = document.getElementById('cash-section');
+        const publishFormBlock = document.getElementById('publish-form-block');
+        const syncSection = document.getElementById('sync-section');
+        const clientCartSection = document.getElementById('client-cart-section');
+        const staffOrdersSection = document.getElementById('staff-orders-section');
+        const thActionHeader = document.getElementById('th-action-header');
+        const closeDayContainer = document.getElementById('close-day-container');
+        const staffBtnText = document.getElementById('staff-btn-text');
+
+        const isStaff = isAuthenticated;
+        const isAdmin = currentRole === 'Администратор' && isAuthenticated;
+
+        staffBtnText.textContent = isStaff ? `👤 Работник: ${currentRole} (Выйти)` : '🔒 Вход для сотрудников';
+
+        cashSection.style.display = isStaff ? 'block' : 'none';
+        publishFormBlock.style.display = isStaff ? 'block' : 'none';
+        syncSection.style.display = isStaff ? 'block' : 'none';
+        staffOrdersSection.style.display = isStaff ? 'block' : 'none';
+        clientCartSection.style.display = !isStaff ? 'block' : 'none';
+        
+        thActionHeader.style.display = isAdmin ? '' : 'none';
+        closeDayContainer.style.display = isAdmin ? 'block' : 'none';
+
+        // Таблица накладных
+        const tbody = document.getElementById('invoice-tbody');
+        let total = 0;
+        tbody.innerHTML = '';
+
+        if (invoices.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #888;">Накладных за текущий день пока нет.</td></tr>';
+        } else {
+            invoices.forEach(item => {
+                total += item.sum;
+                const tr = document.createElement('tr');
+                let deleteTD = isAdmin ? `<td><button class="btn btn-danger" onclick="deleteInvoice(${item.id})">Удалить</button></td>` : '';
+                
+                const thumbHtml = item.image 
+                    ? `<img src="${item.image}" class="inv-thumb" alt="Чек" onclick="window.open('${item.image}')" title="Нажмите, чтобы увеличить">`
+                    : '<span style="color:#aaa;font-size:0.8rem;">Нет фото</span>';
+
+                tr.innerHTML = `
+                    <td>${thumbHtml}</td>
+                    <td>${item.number}</td>
+                    <td>${item.role}</td>
+                    <td>${item.product}</td>
+                    <td>${item.sum.toLocaleString()}</td>
+                    <td>${item.comment || '-'}</td>
+                    ${deleteTD}
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+        document.getElementById('total-amount').textContent = total.toLocaleString();
+
+        // Архив закрытых дней
+        const archiveTbody = document.getElementById('archive-tbody');
+        archiveTbody.innerHTML = '';
+        if (archiveDays.length === 0) {
+            archiveTbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: #888;">Архив пуст.</td></tr>';
+        } else {
+            archiveDays.forEach(day => {
+                archiveTbody.innerHTML += `
+                    <tr>
+                        <td>${day.date}</td>
+                        <td>${day.count} накладных</td>
+                        <td><b>${day.sum.toLocaleString()} ₸</b></td>
+                    </tr>
+                `;
+            });
+        }
+
+        // Заказы от клиентов
+        const ordersTbody = document.getElementById('orders-tbody');
+        ordersTbody.innerHTML = '';
+        if (clientOrders.length === 0) {
+            ordersTbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #888;">Новых заказов нет.</td></tr>';
+        } else {
+            clientOrders.forEach(ord => {
+                let itemsStr = ord.items.map(i => `${i.title} (${i.price} ₸)`).join(', ');
+                ordersTbody.innerHTML += `
+                    <tr>
+                        <td><b>📞 ${ord.phone}</b></td>
+                        <td>${itemsStr}</td>
+                        <td><b>${ord.total.toLocaleString()} ₸</b></td>
+                        <td><button class="btn btn-danger" onclick="deleteOrder(${ord.id})">Обработан / Удалить</button></td>
+                    </tr>
+                `;
+            });
+        }
+
+        // Каталог товаров
+        const catalogContainer = document.getElementById('catalog-container');
+        catalogContainer.innerHTML = '';
+
+        if (products.length === 0) {
+            catalogContainer.innerHTML = '<p style="color: #888; grid-column: 1/-1;">Товаров в наличии пока нет.</p>';
+        } else {
+            products.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'product-card';
+
+                let actionBtnHtml = '';
+                if (isStaff) {
+                    actionBtnHtml = `<button class="btn btn-danger" onclick="deleteProduct(${item.id})">Удалить товар</button>`;
+                } else {
+                    actionBtnHtml = `<button class="btn btn-success" onclick="addToCart(${item.id})">🛒 В корзину</button>`;
+                }
+
+                const imgHtml = item.image 
+                    ? `<img src="${item.image}" class="product-img" alt="${item.title}">`
+                    : `<div class="product-img" style="display:flex;align-items:center;justify-content:center;color:#aaa;">Нет фото</div>`;
+
+                card.innerHTML = `
+                    ${imgHtml}
+                    <div class="product-info">
+                        <div class="product-sku">Арт: ${item.sku}</div>
+                        <div class="product-title">${item.title}</div>
+                        <div class="product-price">${item.price.toLocaleString()} ₸</div>
+                        <div class="product-comment">${item.comment || ''}</div>
+                        ${actionBtnHtml}
+                    </div>
+                `;
+                catalogContainer.appendChild(card);
+            });
+        }
+    }
+
+    function exportData() {
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ invoices, products, archiveDays, clientOrders }, null, 2));
+        const downloadAnchor = document.createElement('a');
+        downloadAnchor.setAttribute("href", dataStr);
+        downloadAnchor.setAttribute("download", "store_full_data.json");
+        document.body.appendChild(downloadAnchor);
+        downloadAnchor.click();
+        downloadAnchor.remove();
+    }
+
+    function importData(input) {
+        const file = input.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const imported = JSON.parse(e.target.result);
+                if (imported.invoices || imported.products) {
+                    invoices = imported.invoices || [];
+                    products = imported.products || [];
+                    archiveDays = imported.archiveDays || [];
+                    clientOrders = imported.clientOrders || [];
+                    saveDataToStorage();
+                    updateUI();
+                    alert('Данные успешно загружены!');
+                }
+            } catch (err) {
+                alert('Ошибка при чтении файла.');
+            }
+        };
+        reader.readAsText(file);
+    }
+
+    updateUI();
+</script>
+
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v4bc70e2c01a94c73b74392e4234840661791215815920" integrity="sha512-L0ha0OXavK/8okipN9F8BtP84dg9DUhPERbBXzwI6dgTA55d2+yweo3pn5CSFYs45/r8md2+xvUPtTdvTNRfjA==" data-cf-beacon='{"version":"2024.11.0","token":"e3c1c9af36de41759418005494a48906","r":1,"spa":2}' crossorigin="anonymous"></script>
+</body>
+</html>
